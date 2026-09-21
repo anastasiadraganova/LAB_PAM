@@ -1,0 +1,83 @@
+# ── Локальные рабочие файлы (не публикуются) ───────────────────────────
+_local/
+*.local.md
+.notes/
+
+# Конфигурация локальных инструментов разработки
+.claude/
+CLAUDE.md
+AGENTS.md
+.cursor/
+.cursorrules
+.aider*
+.continue/
+.windsurf/
+.mcp.json
+.github/copilot-instructions.md
+
+# ── Flutter / Dart ─────────────────────────────────────────────────────
+app/.dart_tool/
+app/.packages
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.pub-cache/
+app/.pub/
+**/*.g.dart
+**/*.freezed.dart
+**/doc/api/
+*.iml
+
+# Android
+app/android/.gradle/
+app/android/local.properties
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+app/android/key.properties
+*.jks
+*.keystore
+
+# iOS
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Flutter/App.framework
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Flutter/Generated.xcconfig
+**/*.mode1v3
+**/*.mode2v3
+**/*.perspectivev3
+**/xcuserdata/
+
+# ── .NET ───────────────────────────────────────────────────────────────
+backend/bin/
+backend/obj/
+backend/**/bin/
+backend/**/obj/
+backend/.vs/
+backend/appsettings.Development.json
+backend/appsettings.Local.json
+*.user
+*.suo
+*.userprefs
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+# ── Секреты ────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+secrets.json
+
+# ── ОС и редакторы ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
