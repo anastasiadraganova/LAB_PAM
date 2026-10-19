@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/router/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -11,7 +14,6 @@ import '../../../shared/widgets/day_rule.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/event_card.dart';
 import '../../../shared/widgets/filter_chips.dart';
-import '../../event_details/presentation/event_details_screen.dart';
 import '../data/demo_events.dart';
 
 /// The listing: search, category filters and the events themselves, gathered
@@ -131,10 +133,6 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   void _openEvent(Event event) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => EventDetailsScreen(event: event),
-      ),
-    );
+    context.go(AppRoutes.event(event.id));
   }
 }

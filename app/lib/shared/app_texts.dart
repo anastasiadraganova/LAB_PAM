@@ -42,6 +42,10 @@ abstract final class AppTexts {
   static const String cancelTicket =
       'Отменить билет? Вернуть его потом не получится.';
 
+  /// Heading of the order summary shown before the purchase goes through.
+  static const String checkOrder = 'Проверьте заказ';
+  static const String changeQty = 'Изменить количество';
+
   static const String eventIsPast = 'Событие уже прошло.';
 
   static const String today = 'сегодня';

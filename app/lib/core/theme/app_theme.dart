@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 import 'app_typography.dart';
+import 'spacing.dart';
 
 /// Light and dark themes assembled from the design tokens by hand.
 ///
@@ -47,6 +48,21 @@ abstract final class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
+      ),
+      // Messages are printed in black on paper, like everything else.
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: palette.black,
+        contentTextStyle: AppTypography.body.copyWith(color: palette.paper),
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.control),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        showDragHandle: true,
+        dragHandleColor: palette.rule,
       ),
       extensions: <ThemeExtension<dynamic>>[palette],
     );

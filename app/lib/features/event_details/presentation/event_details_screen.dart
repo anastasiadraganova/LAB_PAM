@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/router/app_routes.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
@@ -9,10 +12,10 @@ import '../../../shared/models/event.dart';
 import '../../../shared/widgets/app_buttons.dart';
 import '../../../shared/widgets/date_stamp.dart';
 import '../../../shared/widgets/event_poster.dart';
-import '../../purchase/presentation/purchase_screen.dart';
 
 /// One event in full: poster, name, where and when, what it costs, and the way
-/// to a ticket.
+/// to a ticket. Once the event has started, the button gives way to a line
+/// saying so.
 class EventDetailsScreen extends StatelessWidget {
   const EventDetailsScreen({super.key, required this.event});
 
@@ -23,6 +26,7 @@ class EventDetailsScreen extends StatelessWidget {
     final palette = context.palette;
     final today = DateTime.now();
     final isToday = event.day == DateTime(today.year, today.month, today.day);
+    final isPast = event.isPast(now: today);
 
     return Scaffold(
       appBar: AppBar(leading: const BackButton()),
@@ -81,18 +85,19 @@ class EventDetailsScreen extends StatelessWidget {
           Spacing.gutter,
           Spacing.md,
         ),
-        child: PrimaryButton(
-          label: AppTexts.purchaseAction(isFree: event.isFree, qty: 1),
-          onPressed: () => _openPurchase(context),
-        ),
-      ),
-    );
-  }
-
-  void _openPurchase(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => PurchaseScreen(event: event),
+        child: isPast
+            ? Padding(
+                padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                child: Text(
+                  AppTexts.eventIsPast,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.body.copyWith(color: palette.grey),
+                ),
+              )
+            : PrimaryButton(
+                label: AppTexts.purchaseAction(isFree: event.isFree, qty: 1),
+                onPressed: () => context.go(AppRoutes.purchase(event.id)),
+              ),
       ),
     );
   }
