@@ -79,6 +79,25 @@ abstract final class AppTexts {
   static const String noAccount = 'Нет аккаунта?';
   static const String hasAccount = 'Уже есть аккаунт?';
 
+  static const String wrongCredentials = 'Неверная почта или пароль.';
+  static const String emailTaken =
+      'Аккаунт с этой почтой уже есть. Войдите в него.';
+  static const String signInRequired = 'Войдите в аккаунт.';
+
+  static const String retry = 'Повторить';
+  static const String resetFilters = 'Сбросить фильтры';
+
+  static const String ticketsError =
+      'Не удалось загрузить билеты. Проверьте соединение и повторите.';
+  static const String eventNotFound = 'Событие не найдено.';
+  static const String ticketNotFound = 'Билет не найден.';
+  static const String ticketNotActive = 'Отменить можно только активный билет.';
+
+  static const String cancelAction = 'Отменить билет';
+  static const String cancelNote = 'Вернуть его потом не получится.';
+  static const String keepTicket = 'Оставить билет';
+  static const String ticketCancelled = 'Билет отменён';
+
   static const String signOut = 'Выйти из аккаунта';
   static const String signOutNote = 'Придётся войти заново.';
 }
