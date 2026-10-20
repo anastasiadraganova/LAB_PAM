@@ -84,6 +84,9 @@ abstract final class AppTexts {
       'Аккаунт с этой почтой уже есть. Войдите в него.';
   static const String signInRequired = 'Войдите в аккаунт.';
 
+  static const String somethingWrong =
+      'Что-то пошло не так. Повторите попытку.';
+
   static const String retry = 'Повторить';
   static const String resetFilters = 'Сбросить фильтры';
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/event_details/presentation/event_details_screen.dart';
 import '../../features/events/data/demo_events.dart';
@@ -13,24 +15,53 @@ import '../../shared/validation/validators.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import 'app_routes.dart';
 
+/// Where the app opens. Tests override it to start on a given screen.
+final initialLocationProvider = Provider<String>((ref) => AppRoutes.events);
+
+/// The router lives in the provider tree, so that its redirects can read the
+/// session and it is rebuilt nowhere else.
+final routerProvider = Provider<GoRouter>((ref) {
+  // Every change of the signed in user re-runs the redirects.
+  final sessionChanges = ValueNotifier<int>(0);
+  ref.listen(currentUserProvider, (_, _) => sessionChanges.value++);
+
+  final router = createAppRouter(
+    ref,
+    initialLocation: ref.read(initialLocationProvider),
+    refreshListenable: sessionChanges,
+  );
+
+  ref.onDispose(() {
+    router.dispose();
+    sessionChanges.dispose();
+  });
+  return router;
+});
+
 /// Route table.
 ///
 /// The three sections live in a shell with the bottom navigation, each on its
 /// own stack so that switching sections keeps the scroll position. The event
 /// card and the purchase screen cover the whole screen, navigation included —
 /// they have their own action bar at the bottom.
-GoRouter createAppRouter({String initialLocation = AppRoutes.auth}) {
+///
+/// Access follows the session: signed out, every path leads to the sign-in
+/// screen; signed in, the sign-in screen leads to the listing.
+GoRouter createAppRouter(
+  Ref ref, {
+  String initialLocation = AppRoutes.events,
+  Listenable? refreshListenable,
+}) {
   final rootKey = GlobalKey<NavigatorState>();
 
   return GoRouter(
     navigatorKey: rootKey,
     initialLocation: initialLocation,
+    refreshListenable: refreshListenable,
     routes: [
       GoRoute(
         path: AppRoutes.auth,
-        builder: (context, state) => AuthScreen(
-          onSubmit: () => context.go(AppRoutes.events),
-        ),
+        builder: (context, state) => const AuthScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _Shell(shell: shell),
@@ -62,7 +93,8 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.auth}) {
                         },
                         builder: (context, state) => PurchaseScreen(
                           event: _eventOf(state)!,
-                          initialQty: Validators.parseQty(
+                          initialQty:
+                              Validators.parseQty(
                                 state.uri.queryParameters['qty'],
                               ) ??
                               Validators.minQty,
@@ -86,17 +118,23 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.auth}) {
             routes: [
               GoRoute(
                 path: AppRoutes.profile,
-                builder: (context, state) => ProfileScreen(
-                  onSignOut: () => context.go(AppRoutes.auth),
-                ),
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),
         ],
       ),
     ],
-    redirect: (context, state) =>
-        state.uri.path == '/' ? AppRoutes.events : null,
+    redirect: (context, state) {
+      final path = state.uri.path;
+      if (path == '/') return AppRoutes.events;
+
+      final isSignedIn = ref.read(currentUserProvider) != null;
+      final isAtAuth = path == AppRoutes.auth;
+      if (!isSignedIn && !isAtAuth) return AppRoutes.auth;
+      if (isSignedIn && isAtAuth) return AppRoutes.events;
+      return null;
+    },
     // An unknown path leads back to the listing instead of an error page.
     onException: (context, state, router) => router.go(AppRoutes.events),
   );
@@ -119,10 +157,8 @@ class _Shell extends StatelessWidget {
       bottomNavigationBar: AppBottomNav(
         currentIndex: shell.currentIndex,
         // A second tap on the current section returns it to its first screen.
-        onSelected: (index) => shell.goBranch(
-          index,
-          initialLocation: index == shell.currentIndex,
-        ),
+        onSelected: (index) =>
+            shell.goBranch(index, initialLocation: index == shell.currentIndex),
       ),
     );
   }

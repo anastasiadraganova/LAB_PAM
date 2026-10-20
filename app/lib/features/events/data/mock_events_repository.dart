@@ -11,9 +11,9 @@ class MockEventsRepository implements EventsRepository {
     this.latency = const Duration(milliseconds: 400),
     List<Event>? events,
   }) : _events = List<Event>.unmodifiable(
-          [...(events ?? demoEvents)]
-            ..sort((a, b) => a.dateTime.compareTo(b.dateTime)),
-        );
+         [...(events ?? demoEvents)]
+           ..sort((a, b) => a.dateTime.compareTo(b.dateTime)),
+       );
 
   final Duration latency;
   final List<Event> _events;

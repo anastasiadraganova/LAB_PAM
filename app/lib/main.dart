@@ -1,35 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
 import 'core/router/app_router.dart';
-import 'core/router/app_routes.dart';
 import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Intl.defaultLocale = 'ru';
   await initializeDateFormatting('ru');
-  runApp(EventHubApp());
+
+  // All application state lives in this scope: repositories, the session,
+  // the listing with its filters and the tickets.
+  runApp(const ProviderScope(child: EventHubApp()));
 }
 
-/// Application root. Session state arrives with the next stage, so for now the
-/// application always opens on the sign-in screen.
-class EventHubApp extends StatelessWidget {
-  EventHubApp({super.key, String initialLocation = AppRoutes.auth})
-      : _router = createAppRouter(initialLocation: initialLocation);
-
-  final GoRouter _router;
+/// Application root. It needs a [ProviderScope] above it.
+class EventHubApp extends ConsumerWidget {
+  const EventHubApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'EventHub',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      routerConfig: _router,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

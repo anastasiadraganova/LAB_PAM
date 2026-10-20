@@ -1,13 +1,17 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
-
+import 'package:eventhub/core/router/app_routes.dart';
 import 'package:eventhub/main.dart';
+import 'package:eventhub/shared/app_texts.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'test_app.dart';
 
 void main() {
-  testWidgets('application boots', (WidgetTester tester) async {
-    GoogleFonts.config.allowRuntimeFetching = false;
-    await tester.pumpWidget(EventHubApp());
+  setUpAll(setUpTestEnvironment);
+
+  testWidgets('application boots on the sign-in screen', (tester) async {
+    await pumpApp(tester, location: AppRoutes.events, signedIn: false);
 
     expect(find.byType(EventHubApp), findsOneWidget);
+    expect(find.text(AppTexts.titleSignIn), findsOneWidget);
   });
 }
