@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
@@ -11,7 +12,10 @@ import '../../../shared/formatters.dart';
 import '../../../shared/models/event.dart';
 import '../../../shared/validation/validators.dart';
 import '../../../shared/widgets/app_buttons.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/loading_state.dart';
 import '../../../shared/widgets/ticket_counter.dart';
+import '../../events/presentation/events_providers.dart';
 
 /// How many tickets, what it comes to, and the button that says exactly what
 /// it will do.
@@ -19,21 +23,48 @@ import '../../../shared/widgets/ticket_counter.dart';
 /// The count is always a whole number from 1 to 10: the counter cannot step
 /// past either end, and the order is checked once more before the summary is
 /// shown. The purchase goes through only after the summary is confirmed.
-class PurchaseScreen extends StatefulWidget {
+class PurchaseScreen extends ConsumerWidget {
   const PurchaseScreen({
     super.key,
-    required this.event,
+    required this.eventId,
     this.initialQty = Validators.minQty,
   });
+
+  final String eventId;
+  final int initialQty;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final event = ref.watch(eventByIdProvider(eventId));
+
+    return switch (event) {
+      AsyncData(value: final event?) => _PurchaseView(
+        event: event,
+        initialQty: initialQty,
+      ),
+      AsyncData() || AsyncError() => Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: const EmptyState(message: AppTexts.eventNotFound),
+      ),
+      _ => Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: const LoadingState(),
+      ),
+    };
+  }
+}
+
+class _PurchaseView extends StatefulWidget {
+  const _PurchaseView({required this.event, required this.initialQty});
 
   final Event event;
   final int initialQty;
 
   @override
-  State<PurchaseScreen> createState() => _PurchaseScreenState();
+  State<_PurchaseView> createState() => _PurchaseViewState();
 }
 
-class _PurchaseScreenState extends State<PurchaseScreen> {
+class _PurchaseViewState extends State<_PurchaseView> {
   late int _qty = Validators.qty(widget.initialQty) == null
       ? widget.initialQty
       : Validators.minQty;

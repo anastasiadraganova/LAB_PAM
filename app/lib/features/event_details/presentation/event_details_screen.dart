@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
@@ -11,13 +12,61 @@ import '../../../shared/formatters.dart';
 import '../../../shared/models/event.dart';
 import '../../../shared/widgets/app_buttons.dart';
 import '../../../shared/widgets/date_stamp.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/event_poster.dart';
+import '../../../shared/widgets/loading_state.dart';
+import '../../events/presentation/events_providers.dart';
 
 /// One event in full: poster, name, where and when, what it costs, and the way
 /// to a ticket. Once the event has started, the button gives way to a line
 /// saying so.
-class EventDetailsScreen extends StatelessWidget {
-  const EventDetailsScreen({super.key, required this.event});
+///
+/// The event is read by its identifier from [eventByIdProvider], so a link
+/// opened from outside shows the same loading and error states as the list.
+class EventDetailsScreen extends ConsumerWidget {
+  const EventDetailsScreen({super.key, required this.eventId});
+
+  final String eventId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final event = ref.watch(eventByIdProvider(eventId));
+
+    return switch (event) {
+      AsyncData(value: final event?) => _EventDetailsView(event: event),
+      AsyncData() => const _Message(message: AppTexts.eventNotFound),
+      AsyncError() => _Message(
+        message: AppTexts.listingError,
+        action: AppTextButton(
+          label: AppTexts.retry,
+          onPressed: () => ref.invalidate(eventByIdProvider(eventId)),
+        ),
+      ),
+      _ => Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: const LoadingState(),
+      ),
+    };
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({required this.message, this.action});
+
+  final String message;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(leading: const BackButton()),
+      body: EmptyState(message: message, action: action),
+    );
+  }
+}
+
+class _EventDetailsView extends StatelessWidget {
+  const _EventDetailsView({required this.event});
 
   final Event event;
 

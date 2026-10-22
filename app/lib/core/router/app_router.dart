@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/event_details/presentation/event_details_screen.dart';
-import '../../features/events/data/demo_events.dart';
+import '../../features/events/presentation/events_providers.dart';
 import '../../features/events/presentation/events_screen.dart';
 import '../../features/my_tickets/presentation/my_tickets_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
@@ -75,24 +75,27 @@ GoRouter createAppRouter(
                   GoRoute(
                     path: ':id',
                     parentNavigatorKey: rootKey,
-                    redirect: (context, state) =>
-                        _eventOf(state) == null ? AppRoutes.events : null,
-                    builder: (context, state) =>
-                        EventDetailsScreen(event: _eventOf(state)!),
+                    redirect: (context, state) async =>
+                        await _eventOf(ref, state) == null
+                        ? AppRoutes.events
+                        : null,
+                    builder: (context, state) => EventDetailsScreen(
+                      eventId: state.pathParameters['id']!,
+                    ),
                     routes: [
                       GoRoute(
                         path: 'buy',
                         parentNavigatorKey: rootKey,
                         // Tickets to a past event are not sold: such a link
                         // lands on the event card, which says why.
-                        redirect: (context, state) {
-                          final event = _eventOf(state);
+                        redirect: (context, state) async {
+                          final event = await _eventOf(ref, state);
                           if (event == null) return AppRoutes.events;
                           if (event.isPast()) return AppRoutes.event(event.id);
                           return null;
                         },
                         builder: (context, state) => PurchaseScreen(
-                          event: _eventOf(state)!,
+                          eventId: state.pathParameters['id']!,
                           initialQty:
                               Validators.parseQty(
                                 state.uri.queryParameters['qty'],
@@ -140,9 +143,11 @@ GoRouter createAppRouter(
   );
 }
 
-Event? _eventOf(GoRouterState state) {
+/// The event a path points to, loaded through the same provider the screens
+/// use, so the redirect and the screen share one request.
+Future<Event?> _eventOf(Ref ref, GoRouterState state) async {
   final id = state.pathParameters['id'];
-  return id == null ? null : demoEventById(id);
+  return id == null ? null : ref.read(eventByIdProvider(id).future);
 }
 
 class _Shell extends StatelessWidget {
