@@ -16,6 +16,8 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/loading_state.dart';
 import '../../../shared/widgets/ticket_counter.dart';
 import '../../events/presentation/events_providers.dart';
+import '../../my_tickets/domain/tickets_repository.dart';
+import '../../my_tickets/presentation/tickets_controller.dart';
 
 /// How many tickets, what it comes to, and the button that says exactly what
 /// it will do.
@@ -54,20 +56,25 @@ class PurchaseScreen extends ConsumerWidget {
   }
 }
 
-class _PurchaseView extends StatefulWidget {
+/// The chosen quantity is screen-local state: it means nothing outside this
+/// screen. The order itself goes to [TicketsController], which records it in
+/// the repository and adds the ticket to "Мои билеты".
+class _PurchaseView extends ConsumerStatefulWidget {
   const _PurchaseView({required this.event, required this.initialQty});
 
   final Event event;
   final int initialQty;
 
   @override
-  State<_PurchaseView> createState() => _PurchaseViewState();
+  ConsumerState<_PurchaseView> createState() => _PurchaseViewState();
 }
 
-class _PurchaseViewState extends State<_PurchaseView> {
+class _PurchaseViewState extends ConsumerState<_PurchaseView> {
   late int _qty = Validators.qty(widget.initialQty) == null
       ? widget.initialQty
       : Validators.minQty;
+
+  bool _isSubmitting = false;
 
   void _setQty(int value) {
     if (Validators.qty(value) != null) return;
@@ -76,7 +83,9 @@ class _PurchaseViewState extends State<_PurchaseView> {
 
   Future<void> _submit() async {
     final event = widget.event;
-    if (Validators.qty(_qty) != null || event.isPast()) return;
+    if (_isSubmitting || Validators.qty(_qty) != null || event.isPast()) {
+      return;
+    }
 
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -85,9 +94,19 @@ class _PurchaseViewState extends State<_PurchaseView> {
     );
     if (confirmed != true || !mounted) return;
 
-    // The ticket itself is stored from the next stage on; here the scenario
-    // only moves on to the tickets section and reports the result.
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(ticketsControllerProvider.notifier).purchase(event, _qty);
+    } on TicketException catch (error) {
+      if (mounted) setState(() => _isSubmitting = false);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
+    if (!mounted) return;
+
     context.go(AppRoutes.myTickets);
     messenger
       ..hideCurrentSnackBar()
@@ -146,7 +165,7 @@ class _PurchaseViewState extends State<_PurchaseView> {
         ),
         child: PrimaryButton(
           label: AppTexts.purchaseAction(isFree: event.isFree, qty: _qty),
-          onPressed: _submit,
+          onPressed: _isSubmitting ? null : _submit,
         ),
       ),
     );
