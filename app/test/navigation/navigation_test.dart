@@ -69,5 +69,6 @@ void main() {
 
     expect(find.text(AppTexts.titleMyTickets), findsOneWidget);
     expect(find.text(AppTexts.ticketBought), findsOneWidget);
+    expect(find.text('10 билетов'), findsOneWidget);
   });
 }
