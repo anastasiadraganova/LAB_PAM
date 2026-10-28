@@ -20,6 +20,9 @@ public static class Errors
     public static IResult NotFound(string message = "Resource not found") =>
         Error(404, "NOT_FOUND", message);
 
+    public static IResult Forbidden(string message = "Not allowed") =>
+        Error(403, "FORBIDDEN", message);
+
     public static IResult EmailTaken() =>
         Error(409, "EMAIL_TAKEN", "An account with this email already exists");
 

@@ -40,6 +40,20 @@ notes.MapGet("/{id:long}", Notes.GetOne);
 notes.MapPut("/{id:long}", Notes.Update);
 notes.MapDelete("/{id:long}", Notes.Delete);
 
+// EventHub entities, registered the same way as notes.
+var events = app.MapGroup("/events").AddEndpointFilter(Auth.RequireAuth);
+events.MapGet("", Events.List);
+events.MapPost("", Events.Create);
+events.MapGet("/{id:long}", Events.GetOne);
+events.MapPut("/{id:long}", Events.Update);
+events.MapDelete("/{id:long}", Events.Delete);
+
+var tickets = app.MapGroup("/tickets").AddEndpointFilter(Auth.RequireAuth);
+tickets.MapGet("", Tickets.List);
+tickets.MapPost("", Tickets.Create);
+tickets.MapGet("/{id:long}", Tickets.GetOne);
+tickets.MapPost("/{id:long}/cancel", Tickets.Cancel);
+
 app.MapPost("/files", Files.Upload).AddEndpointFilter(Auth.RequireAuth);
 app.MapGet("/files/{id:long}", Files.Download); // public on purpose (images by URL)
 

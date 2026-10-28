@@ -34,6 +34,29 @@ public static class Db
               created_at TEXT    NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS events (
+              id          INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id     INTEGER NOT NULL REFERENCES users (id),
+              title       TEXT    NOT NULL,
+              category    TEXT    NOT NULL,
+              venue       TEXT    NOT NULL,
+              starts_at   TEXT    NOT NULL,
+              price       REAL    NOT NULL DEFAULT 0,
+              image_url   TEXT    NOT NULL DEFAULT '',
+              description TEXT    NOT NULL DEFAULT '',
+              created_at  TEXT    NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS tickets (
+              id          INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id     INTEGER NOT NULL REFERENCES users (id),
+              event_id    INTEGER NOT NULL REFERENCES events (id),
+              qty         INTEGER NOT NULL,
+              total_price REAL    NOT NULL,
+              status      TEXT    NOT NULL DEFAULT 'active',
+              created_at  TEXT    NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS files (
               id         INTEGER PRIMARY KEY AUTOINCREMENT,
               user_id    INTEGER NOT NULL REFERENCES users (id),
@@ -60,6 +83,10 @@ public static class Db
 
     /// <summary>Current UTC time in ISO-8601, the format used for all timestamps.</summary>
     public static string NowIso() => DateTime.UtcNow.ToString("o");
+
+    /// <summary>A moment in the same UTC ISO-8601 format, so stored dates
+    /// compare correctly as text.</summary>
+    public static string Iso(DateTimeOffset moment) => moment.UtcDateTime.ToString("o");
 }
 
 /// <summary>
