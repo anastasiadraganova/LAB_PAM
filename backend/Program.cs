@@ -26,6 +26,7 @@ app.UseCors();
 
 Db.Init("app.db");          // creates app.db + schema on first start
 Files.InitStorage("uploads"); // creates uploads/ on first start
+Seed.Run();                   // demo listing for an empty database
 
 app.MapGet("/health", () => Results.Json(new { status = "ok" }));
 app.MapPost("/auth/register", Auth.Register);
