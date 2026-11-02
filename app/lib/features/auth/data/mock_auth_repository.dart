@@ -24,6 +24,10 @@ class MockAuthRepository implements AuthRepository {
   @override
   User? get currentUser => _currentUser;
 
+  /// Nothing is saved between launches: the session lives in memory.
+  @override
+  Future<void> restoreSession() async {}
+
   @override
   Future<User> signIn({required String email, required String password}) async {
     await _wait();

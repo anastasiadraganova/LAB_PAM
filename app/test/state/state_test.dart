@@ -17,7 +17,10 @@ void main() {
 
   setUp(() {
     container = ProviderContainer(
-      overrides: [mockLatencyProvider.overrideWithValue(Duration.zero)],
+      overrides: [
+        useMocksProvider.overrideWithValue(true),
+        mockLatencyProvider.overrideWithValue(Duration.zero),
+      ],
     );
     addTearDown(container.dispose);
   });

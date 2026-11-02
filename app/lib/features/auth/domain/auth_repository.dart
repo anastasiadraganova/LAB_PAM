@@ -16,6 +16,10 @@ abstract interface class AuthRepository {
   /// is restored before the first frame.
   User? get currentUser;
 
+  /// Brings back the session saved on the device, if there is one and the
+  /// backend still accepts it. Called once, before the first frame.
+  Future<void> restoreSession();
+
   /// Throws [AuthException] when the email and password do not match.
   Future<User> signIn({required String email, required String password});
 

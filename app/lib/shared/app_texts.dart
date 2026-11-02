@@ -87,6 +87,9 @@ abstract final class AppTexts {
   static const String somethingWrong =
       'Что-то пошло не так. Повторите попытку.';
 
+  static const String networkError =
+      'Нет связи с сервером. Проверьте соединение и повторите.';
+
   static const String retry = 'Повторить';
   static const String resetFilters = 'Сбросить фильтры';
 
