@@ -11,6 +11,7 @@ class Event {
     required this.price,
     required this.imageUrl,
     required this.description,
+    this.ownerId,
   });
 
   final String id;
@@ -28,6 +29,10 @@ class Event {
   final String imageUrl;
 
   final String description;
+
+  /// The user who published the event; only they may delete it. Unknown for
+  /// the demo listing.
+  final String? ownerId;
 
   bool get isFree => price == 0;
 

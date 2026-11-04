@@ -1,11 +1,13 @@
 import '../../../shared/models/event.dart';
+import '../../../shared/models/event_category.dart';
+import '../../../shared/models/page_result.dart';
 import '../domain/events_repository.dart';
 import 'demo_events.dart';
 
 /// [EventsRepository] over the hand written demo listing.
 ///
-/// Every call waits for [latency] first, the way a network request would, so
-/// that the loading state of the screens can actually be seen.
+/// It filters and pages in memory exactly as the backend does, and every
+/// call waits for [latency] first, the way a network request would.
 class MockEventsRepository implements EventsRepository {
   MockEventsRepository({
     this.latency = const Duration(milliseconds: 400),
@@ -19,9 +21,29 @@ class MockEventsRepository implements EventsRepository {
   final List<Event> _events;
 
   @override
-  Future<List<Event>> fetchEvents() async {
+  Future<PageResult<Event>> fetchEvents({
+    int page = 1,
+    int limit = 20,
+    String query = '',
+    EventCategory? category,
+  }) async {
     await _wait();
-    return _events;
+
+    final search = query.trim().toLowerCase();
+    final matching = _events
+        .where(
+          (event) =>
+              (category == null || event.category == category) &&
+              (search.isEmpty || event.title.toLowerCase().contains(search)),
+        )
+        .toList();
+
+    return PageResult(
+      items: matching.skip((page - 1) * limit).take(limit).toList(),
+      page: page,
+      limit: limit,
+      total: matching.length,
+    );
   }
 
   @override

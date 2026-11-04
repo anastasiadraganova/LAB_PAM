@@ -4,6 +4,7 @@ import '../../features/auth/data/api_auth_repository.dart';
 import '../../features/auth/data/mock_auth_repository.dart';
 import '../../features/auth/domain/auth_repository.dart';
 import '../../features/auth/presentation/auth_controller.dart';
+import '../../features/events/data/api_events_repository.dart';
 import '../../features/events/data/mock_events_repository.dart';
 import '../../features/events/domain/events_repository.dart';
 import '../../features/my_tickets/data/mock_tickets_repository.dart';
@@ -51,7 +52,9 @@ final authRepositoryProvider = Provider<AuthRepository>(
 );
 
 final eventsRepositoryProvider = Provider<EventsRepository>(
-  (ref) => MockEventsRepository(latency: ref.watch(mockLatencyProvider)),
+  (ref) => ref.watch(useMocksProvider)
+      ? MockEventsRepository(latency: ref.watch(mockLatencyProvider))
+      : ApiEventsRepository(ref.watch(apiClientProvider)),
 );
 
 final ticketsRepositoryProvider = Provider<TicketsRepository>(

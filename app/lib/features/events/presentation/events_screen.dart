@@ -21,8 +21,9 @@ import 'events_providers.dart';
 /// into days under a printed rule.
 ///
 /// The events and the filters both live in providers: the screen only shows
-/// [visibleEventsProvider] and reports what the user picks. The filters
-/// survive switching sections; pull to refresh loads the listing again.
+/// [eventsListProvider] and reports what the user picks. The backend filters
+/// and pages the listing; the next page loads as the end comes into view.
+/// The filters survive switching sections; pull to refresh starts over.
 class EventsScreen extends ConsumerStatefulWidget {
   const EventsScreen({super.key});
 
@@ -52,51 +53,63 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(visibleEventsProvider);
+    final events = ref.watch(eventsListProvider);
 
     return SafeArea(
       bottom: false,
       child: RefreshIndicator(
-        onRefresh: () => ref.refresh(eventsProvider.future),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _header(context)),
-            ...switch (events) {
-              AsyncValue(:final value?) when value.isEmpty => [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: EmptyState(
-                    message: AppTexts.emptyListing,
-                    action: AppTextButton(
-                      label: AppTexts.resetFilters,
-                      onPressed: _resetFilters,
+        onRefresh: () => ref.refresh(eventsListProvider.future),
+        // Near the end of what is loaded, the next page is requested.
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification.metrics.extentAfter < 600) {
+              ref.read(eventsListProvider.notifier).loadMore();
+            }
+            return false;
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(child: _header(context)),
+              ...switch (events) {
+                AsyncError() => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      message: AppTexts.listingError,
+                      action: AppTextButton(
+                        label: AppTexts.retry,
+                        onPressed: () => ref.invalidate(eventsListProvider),
+                      ),
                     ),
                   ),
-                ),
-              ],
-              AsyncValue(:final value?) => [_EventList(events: value)],
-              AsyncError() => [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: EmptyState(
-                    message: AppTexts.listingError,
-                    action: AppTextButton(
-                      label: AppTexts.retry,
-                      onPressed: () => ref.invalidate(eventsProvider),
+                ],
+                AsyncValue(:final value?) when value.items.isEmpty => [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyState(
+                      message: AppTexts.emptyListing,
+                      action: AppTextButton(
+                        label: AppTexts.resetFilters,
+                        onPressed: _resetFilters,
+                      ),
                     ),
                   ),
-                ),
-              ],
-              _ => [
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: LoadingState(),
-                ),
-              ],
-            },
-            const SliverToBoxAdapter(child: SizedBox(height: Spacing.block)),
-          ],
+                ],
+                AsyncValue(:final value?) => [
+                  _EventList(events: value.items),
+                  SliverToBoxAdapter(child: _NextPage(state: value)),
+                ],
+                _ => [
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: LoadingState(),
+                  ),
+                ],
+              },
+              const SliverToBoxAdapter(child: SizedBox(height: Spacing.block)),
+            ],
+          ),
         ),
       ),
     );
@@ -135,6 +148,37 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         const SizedBox(height: Spacing.block),
       ],
     );
+  }
+}
+
+/// Under the last loaded card: a spinner while the next page is on its way,
+/// or a way to ask for it again after a failure.
+class _NextPage extends ConsumerWidget {
+  const _NextPage({required this.state});
+
+  final EventsListState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (state.isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.only(top: Spacing.block),
+        child: LoadingState(),
+      );
+    }
+    if (state.loadMoreFailed) {
+      return Padding(
+        padding: const EdgeInsets.only(top: Spacing.md),
+        child: EmptyState(
+          message: AppTexts.listingError,
+          action: AppTextButton(
+            label: AppTexts.retry,
+            onPressed: () => ref.read(eventsListProvider.notifier).loadMore(),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
 
