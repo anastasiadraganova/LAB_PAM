@@ -58,10 +58,14 @@ public static class Events
         page = Math.Max(page, 1);
         limit = Math.Clamp(limit, 1, 100);
 
-        const string where = "title LIKE $pattern AND ($category = '' OR category = $category)";
-        var pattern = $"%{search}%";
+        // SQLite's LIKE ignores case for Latin letters only, so "хакатон" would
+        // miss "Хакатон". Both sides go through .NET lowercasing instead.
+        const string where =
+            "ulower(title) LIKE $pattern AND ($category = '' OR category = $category)";
+        var pattern = $"%{search.ToLowerInvariant()}%";
 
         using var conn = Db.Open();
+        conn.CreateFunction("ulower", (string value) => value.ToLowerInvariant());
         long total;
         using (var count = conn.Cmd($"SELECT COUNT(*) FROM events WHERE {where}",
                    ("$pattern", pattern), ("$category", category)))
