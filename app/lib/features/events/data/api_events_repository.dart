@@ -1,6 +1,7 @@
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../shared/app_texts.dart';
 import '../../../shared/models/event.dart';
 import '../../../shared/models/event_category.dart';
 import '../../../shared/models/page_result.dart';
@@ -40,6 +41,56 @@ class ApiEventsRepository implements EventsRepository {
     } on ApiException catch (error) {
       if (error.code == ApiException.notFound) return null;
       rethrow;
+    }
+  }
+
+  @override
+  Future<Event> createEvent(EventDraft draft) => _guard(
+    () async => eventFromJson(
+      await _api.post('/events', {
+        'title': draft.title,
+        'category': draft.category.value,
+        'venue': draft.venue,
+        'startsAt': draft.dateTime.toUtc().toIso8601String(),
+        'price': draft.price,
+        'imageUrl': draft.imageUrl,
+        'description': draft.description,
+      }),
+    ),
+  );
+
+  @override
+  Future<void> deleteEvent(String id) =>
+      _guard(() => _api.delete('/events/$id'));
+
+  /// `POST /files` from the template; the answer's `url` is a path on the
+  /// backend (`/files/7`), stored as is and resolved when events are read.
+  @override
+  Future<String> uploadPoster({
+    required List<int> bytes,
+    required String filename,
+  }) => _guard(() async {
+    final json = await _api.upload('/files', bytes: bytes, filename: filename);
+    return json['url'] as String;
+  });
+
+  /// The backend's refusals, in the words the screens use.
+  Future<T> _guard<T>(Future<T> Function() request) async {
+    try {
+      return await request();
+    } on ApiException catch (error) {
+      throw EventException(switch (error) {
+        ApiException(isNetwork: true) => AppTexts.networkError,
+        ApiException(code: ApiException.notFound) => AppTexts.eventNotFound,
+        ApiException(code: ApiException.forbidden) => AppTexts.notOrganizer,
+        ApiException(code: ApiException.validation, :final message)
+            when message.contains('tickets') =>
+          AppTexts.eventHasTickets,
+        ApiException(code: ApiException.validation, :final message)
+            when message.contains('too large') =>
+          AppTexts.posterTooLarge,
+        _ => AppTexts.somethingWrong,
+      });
     }
   }
 

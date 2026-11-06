@@ -22,6 +22,7 @@ class AppTextField extends StatelessWidget {
     this.prefixIcon,
     this.onChanged,
     this.onSubmitted,
+    this.maxLines = 1,
   });
 
   final String? label;
@@ -34,6 +35,9 @@ class AppTextField extends StatelessWidget {
   final IconData? prefixIcon;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+
+  /// More than one for longer text, such as a description.
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +65,8 @@ class AppTextField extends StatelessWidget {
         TextField(
           controller: controller,
           obscureText: obscureText,
+          maxLines: obscureText ? 1 : maxLines,
+          minLines: 1,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           onChanged: onChanged,

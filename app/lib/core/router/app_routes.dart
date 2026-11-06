@@ -5,6 +5,8 @@ abstract final class AppRoutes {
   static const String myTickets = '/my-tickets';
   static const String profile = '/profile';
 
+  static const String newEvent = '$events/new';
+
   static String event(String id) => '$events/$id';
 
   static String purchase(String id, {int? qty}) =>

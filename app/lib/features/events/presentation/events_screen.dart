@@ -127,9 +127,20 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         const SizedBox(height: Spacing.md),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: Spacing.gutter),
-          child: Text(
-            AppTexts.titleListing,
-            style: AppTypography.posterXL.copyWith(color: palette.black),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  AppTexts.titleListing,
+                  style: AppTypography.posterXL.copyWith(color: palette.black),
+                ),
+              ),
+              IconButton(
+                tooltip: AppTexts.newEvent,
+                icon: Icon(Icons.add_box_outlined, color: palette.black),
+                onPressed: () => context.go(AppRoutes.newEvent),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: Spacing.md),

@@ -104,6 +104,38 @@ abstract final class AppTexts {
   static const String keepTicket = 'Оставить билет';
   static const String ticketCancelled = 'Билет отменён';
 
+  static const String newEvent = 'Новое событие';
+  static const String fieldTitle = 'Название';
+  static const String fieldCategory = 'Категория';
+  static const String fieldVenue = 'Место';
+  static const String fieldDateTime = 'Дата и время';
+  static const String fieldPrice = 'Цена, L';
+  static const String fieldDescription = 'Описание';
+  static const String fieldPoster = 'Постер';
+  static const String pickDateTime = 'Выбрать дату и время';
+  static const String pickPoster = 'Выбрать постер';
+  static const String changePoster = 'Заменить постер';
+  static const String publish = 'Опубликовать событие';
+  static const String eventPublished = 'Событие опубликовано';
+
+  static const String titleRequired = 'Введите название.';
+  static const String venueRequired = 'Укажите место.';
+  static const String categoryRequired = 'Выберите категорию.';
+  static const String dateRequired = 'Выберите дату и время.';
+  static const String dateInPast = 'Это время уже прошло.';
+  static const String priceInvalid = 'Цена — число, не меньше нуля.';
+  static const String posterTooLarge = 'Постер больше 5 МБ, выберите другой.';
+
+  static const String deleteEvent = 'Удалить событие';
+  static const String deleteEventNote =
+      'Удалить можно, пока на событие нет билетов.';
+  static const String keepEvent = 'Оставить событие';
+  static const String eventDeleted = 'Событие удалено';
+  static const String eventHasTickets =
+      'На событие уже купили билеты, удалить его нельзя.';
+  static const String notOrganizer =
+      'Изменить событие может только организатор.';
+
   static const String signOut = 'Выйти из аккаунта';
   static const String signOutNote = 'Придётся войти заново.';
 }

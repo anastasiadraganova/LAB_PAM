@@ -5,6 +5,7 @@ import '../../../core/di/providers.dart';
 import '../../../shared/models/event.dart';
 import '../../../shared/models/event_category.dart';
 import '../../../shared/models/page_result.dart';
+import '../domain/events_repository.dart';
 
 /// One event by its identifier, `null` when there is none.
 final eventByIdProvider = FutureProvider.family<Event?, String>(
@@ -160,4 +161,46 @@ class EventsListController extends AsyncNotifier<EventsListState> {
         query: filters.query,
         category: filters.category,
       );
+}
+
+/// Publishing and deleting events. After either, the listing and the event
+/// are loaded anew, so every screen shows the change.
+final eventActionsProvider = Provider<EventActions>(EventActions.new);
+
+class EventActions {
+  EventActions(this._ref);
+
+  final Ref _ref;
+
+  EventsRepository get _repository => _ref.read(eventsRepositoryProvider);
+
+  /// Uploads the poster first, if there is one, then publishes the event
+  /// with its address.
+  ///
+  /// Throws [EventException] when the backend refuses either step.
+  Future<Event> publish(
+    EventDraft draft, {
+    List<int>? posterBytes,
+    String posterName = 'poster.jpg',
+  }) async {
+    var withPoster = draft;
+    if (posterBytes != null) {
+      final url = await _repository.uploadPoster(
+        bytes: posterBytes,
+        filename: posterName,
+      );
+      withPoster = draft.withImage(url);
+    }
+    final event = await _repository.createEvent(withPoster);
+    _ref.invalidate(eventsListProvider);
+    return event;
+  }
+
+  /// Throws [EventException] when the event cannot be deleted.
+  Future<void> delete(String id) async {
+    await _repository.deleteEvent(id);
+    _ref
+      ..invalidate(eventsListProvider)
+      ..invalidate(eventByIdProvider(id));
+  }
 }
