@@ -6,6 +6,7 @@ class PageResult<T> {
     required this.page,
     required this.limit,
     required this.total,
+    this.fromCache = false,
   });
 
   factory PageResult.fromJson(
@@ -27,6 +28,9 @@ class PageResult<T> {
 
   /// Size of the whole list, all pages together.
   final int total;
+
+  /// Served from the device because the backend could not be reached.
+  final bool fromCache;
 
   bool get hasMore => page * limit < total;
 }
