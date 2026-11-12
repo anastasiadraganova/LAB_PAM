@@ -94,6 +94,19 @@ class ApiEventsRepository implements EventsRepository {
     }
   }
 
+  /// The same shape the backend sends, for the offline cache.
+  static Map<String, Object?> eventToJson(Event event) => {
+    'id': event.id,
+    'ownerId': event.ownerId,
+    'title': event.title,
+    'category': event.category.value,
+    'venue': event.venue,
+    'startsAt': event.dateTime.toUtc().toIso8601String(),
+    'price': event.price,
+    'imageUrl': event.imageUrl,
+    'description': event.description,
+  };
+
   /// The backend keeps dates in UTC; the app shows them in local time.
   static Event eventFromJson(Map<String, dynamic> json) => Event(
     id: '${json['id']}',

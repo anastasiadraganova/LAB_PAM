@@ -71,6 +71,8 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(child: _header(context)),
+              if (events.value?.isOffline ?? false)
+                const SliverToBoxAdapter(child: _OfflineNote()),
               ...switch (events) {
                 AsyncError() => [
                   SliverFillRemaining(
@@ -158,6 +160,37 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         FilterChips(selected: category, onSelected: _filters.setCategory),
         const SizedBox(height: Spacing.block),
       ],
+    );
+  }
+}
+
+/// Above the listing when it comes from the device instead of the backend.
+class _OfflineNote extends StatelessWidget {
+  const _OfflineNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.gutter,
+        0,
+        Spacing.gutter,
+        Spacing.md,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 18, color: palette.grey),
+          const SizedBox(width: Spacing.xs),
+          Expanded(
+            child: Text(
+              AppTexts.offline,
+              style: AppTypography.caption.copyWith(color: palette.grey),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

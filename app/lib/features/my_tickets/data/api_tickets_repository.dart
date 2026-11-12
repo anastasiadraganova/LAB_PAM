@@ -64,6 +64,16 @@ class ApiTicketsRepository implements TicketsRepository {
     }
   }
 
+  /// The same shape the backend sends, for the offline cache.
+  static Map<String, Object?> ticketToJson(Ticket ticket) => {
+    'id': ticket.id,
+    'eventId': ticket.eventId,
+    'userId': ticket.userId,
+    'qty': ticket.qty,
+    'totalPrice': ticket.totalPrice,
+    'status': ticket.status.name,
+  };
+
   static Ticket ticketFromJson(Map<String, dynamic> json) => Ticket(
     id: '${json['id']}',
     eventId: '${json['eventId']}',
