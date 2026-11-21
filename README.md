@@ -41,6 +41,54 @@ flutter run
 
 Демо-аккаунт: `marina@eventhub.md` / `eventhub`.
 
+## Без сети
+
+Последняя загруженная афиша, билеты пользователя и сам аккаунт сохраняются на
+устройстве (`shared_preferences`, постеры — в дисковом кэше
+`cached_network_image`). Если сервер недоступен, приложение открывается под
+тем же аккаунтом, показывает сохранённую копию с пометкой «Нет соединения.
+Показана последняя загруженная афиша.», фильтрует её на месте. Покупка, отмена
+и публикация требуют сети. Выход из аккаунта стирает его копию и билеты.
+
+## Release-сборка
+
+Android (APK, Dart-код обфусцирован, символы для разбора сбоев — в
+`build/symbols`, их не публикуют):
+
+```bash
+cd app
+flutter build apk --release --obfuscate --split-debug-info=build/symbols \
+  --dart-define=API_URL=http://<адрес сервера>:8080
+```
+
+Готовый файл: `app/build/app/outputs/flutter-apk/app-release.apk`. Подпись
+берётся из `app/android/key.properties` (в git не попадает):
+
+```properties
+storePassword=...
+keyPassword=...
+keyAlias=upload
+storeFile=C:/путь/к/upload-keystore.jks
+```
+
+Ключ создаётся один раз:
+`keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`.
+Без `key.properties` release-сборка подписывается отладочным ключом — для
+проверки этого хватает, для публикации нет.
+
+Backend:
+
+```bash
+cd backend
+dotnet publish -c Release -o publish
+cd publish
+set JWT_SECRET=<длинная случайная строка>
+dotnet PamBackend.dll
+```
+
+В release секрет JWT обязательно задаётся переменной `JWT_SECRET`: значение по
+умолчанию из шаблона годится только для лабораторной.
+
 ## Структура
 
 ```
@@ -83,7 +131,8 @@ JWT-аутентификацию, CRUD с пагинацией, загрузку
 Какая реализация стоит за интерфейсом, решается в одном месте —
 `core/di/providers.dart`: `Api*Repository` ходят в backend через `ApiClient`
 (`core/network/`: dio, JWT из защищённого хранилища, ошибки шаблона в
-`ApiException`), `Mock*Repository` работают в памяти — для тестов и запуска без
+`ApiException`), `Cached*Repository` оборачивают их и отдают сохранённую копию,
+когда сети нет, `Mock*Repository` работают в памяти — для тестов и запуска без
 сервера.
 
 **State management — Riverpod 3.**
