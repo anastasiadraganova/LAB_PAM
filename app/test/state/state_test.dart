@@ -17,7 +17,10 @@ void main() {
 
   setUp(() {
     container = ProviderContainer(
-      overrides: [mockLatencyProvider.overrideWithValue(Duration.zero)],
+      overrides: [
+        useMocksProvider.overrideWithValue(true),
+        mockLatencyProvider.overrideWithValue(Duration.zero),
+      ],
     );
     addTearDown(container.dispose);
   });
@@ -26,19 +29,24 @@ void main() {
       .read(authControllerProvider.notifier)
       .signIn(email: demoUser.email, password: demoPassword);
 
-  test('filters narrow the loaded listing', () async {
-    container.listen(visibleEventsProvider, (_, _) {});
-    final all = await container.read(eventsProvider.future);
+  test('the listing loads page by page and follows the filters', () async {
+    container.listen(eventsListProvider, (_, _) {});
+    final first = await container.read(eventsListProvider.future);
+    expect(first.items, hasLength(EventsListController.pageSize));
+    expect(first.hasMore, isTrue);
+
+    await container.read(eventsListProvider.notifier).loadMore();
+    final all = container.read(eventsListProvider).requireValue;
+    expect(all.items, hasLength(all.total));
+    expect(all.hasMore, isFalse);
 
     container
         .read(eventFiltersProvider.notifier)
         .setCategory(EventCategory.hackathon);
-    final hackathons = container.read(visibleEventsProvider).requireValue;
-
-    expect(hackathons, isNotEmpty);
-    expect(hackathons.length, lessThan(all.length));
+    final hackathons = await container.read(eventsListProvider.future);
+    expect(hackathons.items, isNotEmpty);
     expect(
-      hackathons.every((e) => e.category == EventCategory.hackathon),
+      hackathons.items.every((e) => e.category == EventCategory.hackathon),
       isTrue,
     );
   });

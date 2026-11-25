@@ -15,6 +15,8 @@ import '../../../shared/widgets/date_stamp.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/event_poster.dart';
 import '../../../shared/widgets/loading_state.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../../events/domain/events_repository.dart';
 import '../../events/presentation/events_providers.dart';
 
 /// One event in full: poster, name, where and when, what it costs, and the way
@@ -65,17 +67,66 @@ class _Message extends StatelessWidget {
   }
 }
 
-class _EventDetailsView extends StatelessWidget {
+/// The organizer of the event also gets the way to delete it.
+class _EventDetailsView extends ConsumerWidget {
   const _EventDetailsView({required this.event});
 
   final Event event;
 
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.gutter,
+            0,
+            Spacing.gutter,
+            Spacing.md,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DangerButton(
+                label: AppTexts.deleteEvent,
+                note: AppTexts.deleteEventNote,
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+              const SizedBox(height: Spacing.sm),
+              SecondaryButton(
+                label: AppTexts.keepEvent,
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    String message;
+    try {
+      await ref.read(eventActionsProvider).delete(event.id);
+      message = AppTexts.eventDeleted;
+      if (context.mounted) context.go(AppRoutes.events);
+    } on EventException catch (error) {
+      message = error.message;
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final today = DateTime.now();
     final isToday = event.day == DateTime(today.year, today.month, today.day);
     final isPast = event.isPast(now: today);
+    final user = ref.watch(currentUserProvider);
+    final isOrganizer = user != null && event.ownerId == user.id;
 
     return Scaffold(
       appBar: AppBar(leading: const BackButton()),
@@ -122,6 +173,14 @@ class _EventDetailsView extends StatelessWidget {
                   event.description,
                   style: AppTypography.body.copyWith(color: palette.black),
                 ),
+                if (isOrganizer) ...[
+                  const SizedBox(height: Spacing.xxl),
+                  DangerButton(
+                    label: AppTexts.deleteEvent,
+                    note: AppTexts.deleteEventNote,
+                    onPressed: () => _delete(context, ref),
+                  ),
+                ],
               ],
             ),
           ),

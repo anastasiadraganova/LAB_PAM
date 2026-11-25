@@ -33,6 +33,7 @@ Future<void> pumpApp(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        useMocksProvider.overrideWithValue(true),
         mockLatencyProvider.overrideWithValue(Duration.zero),
         authRepositoryProvider.overrideWithValue(
           MockAuthRepository(

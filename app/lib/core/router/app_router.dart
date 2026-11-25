@@ -7,6 +7,7 @@ import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/event_details/presentation/event_details_screen.dart';
 import '../../features/events/presentation/events_providers.dart';
 import '../../features/events/presentation/events_screen.dart';
+import '../../features/events/presentation/new_event_screen.dart';
 import '../../features/my_tickets/presentation/my_tickets_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/purchase/presentation/purchase_screen.dart';
@@ -72,6 +73,12 @@ GoRouter createAppRouter(
                 path: AppRoutes.events,
                 builder: (context, state) => const EventsScreen(),
                 routes: [
+                  // Before ':id', which would otherwise take "new" for an id.
+                  GoRoute(
+                    path: 'new',
+                    parentNavigatorKey: rootKey,
+                    builder: (context, state) => const NewEventScreen(),
+                  ),
                   GoRoute(
                     path: ':id',
                     parentNavigatorKey: rootKey,

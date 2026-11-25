@@ -18,8 +18,8 @@ import 'tickets_controller.dart';
 /// Everything that has been bought, cancelled tickets included — a cancelled
 /// ticket keeps its place in the list.
 ///
-/// The tickets come from [ticketsControllerProvider], the events they refer to
-/// from the listing. Tapping an active ticket offers to cancel it.
+/// The tickets come from [ticketsControllerProvider], the event of each one
+/// from [eventByIdProvider]. Tapping an active ticket offers to cancel it.
 class MyTicketsScreen extends ConsumerWidget {
   const MyTicketsScreen({super.key});
 
@@ -27,10 +27,6 @@ class MyTicketsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final tickets = ref.watch(ticketsControllerProvider);
-    final events = {
-      for (final event in ref.watch(eventsProvider).value ?? const <Event>[])
-        event.id: event,
-    };
 
     return SafeArea(
       bottom: false,
@@ -65,7 +61,11 @@ class MyTicketsScreen extends ConsumerWidget {
                     const SizedBox(height: Spacing.md),
                 itemBuilder: (context, index) {
                   final ticket = value[index];
-                  final event = events[ticket.eventId];
+                  // Each card reads its event on its own; the listing may
+                  // not have loaded that page.
+                  final event = ref
+                      .watch(eventByIdProvider(ticket.eventId))
+                      .value;
                   return Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: Spacing.gutter,
