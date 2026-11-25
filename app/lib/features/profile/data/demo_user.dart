@@ -7,3 +7,6 @@ const User demoUser = User(
   name: 'Марина Драганова',
   email: 'marina@eventhub.md',
 );
+
+/// Password of the demo account in the mock authentication repository.
+const String demoPassword = 'eventhub';

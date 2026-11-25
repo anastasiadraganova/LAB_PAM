@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_routes.dart';
@@ -11,7 +12,12 @@ import '../../../shared/formatters.dart';
 import '../../../shared/models/event.dart';
 import '../../../shared/validation/validators.dart';
 import '../../../shared/widgets/app_buttons.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/loading_state.dart';
 import '../../../shared/widgets/ticket_counter.dart';
+import '../../events/presentation/events_providers.dart';
+import '../../my_tickets/domain/tickets_repository.dart';
+import '../../my_tickets/presentation/tickets_controller.dart';
 
 /// How many tickets, what it comes to, and the button that says exactly what
 /// it will do.
@@ -19,24 +25,56 @@ import '../../../shared/widgets/ticket_counter.dart';
 /// The count is always a whole number from 1 to 10: the counter cannot step
 /// past either end, and the order is checked once more before the summary is
 /// shown. The purchase goes through only after the summary is confirmed.
-class PurchaseScreen extends StatefulWidget {
+class PurchaseScreen extends ConsumerWidget {
   const PurchaseScreen({
     super.key,
-    required this.event,
+    required this.eventId,
     this.initialQty = Validators.minQty,
   });
+
+  final String eventId;
+  final int initialQty;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final event = ref.watch(eventByIdProvider(eventId));
+
+    return switch (event) {
+      AsyncData(value: final event?) => _PurchaseView(
+        event: event,
+        initialQty: initialQty,
+      ),
+      AsyncData() || AsyncError() => Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: const EmptyState(message: AppTexts.eventNotFound),
+      ),
+      _ => Scaffold(
+        appBar: AppBar(leading: const BackButton()),
+        body: const LoadingState(),
+      ),
+    };
+  }
+}
+
+/// The chosen quantity is screen-local state: it means nothing outside this
+/// screen. The order itself goes to [TicketsController], which records it in
+/// the repository and adds the ticket to "Мои билеты".
+class _PurchaseView extends ConsumerStatefulWidget {
+  const _PurchaseView({required this.event, required this.initialQty});
 
   final Event event;
   final int initialQty;
 
   @override
-  State<PurchaseScreen> createState() => _PurchaseScreenState();
+  ConsumerState<_PurchaseView> createState() => _PurchaseViewState();
 }
 
-class _PurchaseScreenState extends State<PurchaseScreen> {
+class _PurchaseViewState extends ConsumerState<_PurchaseView> {
   late int _qty = Validators.qty(widget.initialQty) == null
       ? widget.initialQty
       : Validators.minQty;
+
+  bool _isSubmitting = false;
 
   void _setQty(int value) {
     if (Validators.qty(value) != null) return;
@@ -45,7 +83,9 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
 
   Future<void> _submit() async {
     final event = widget.event;
-    if (Validators.qty(_qty) != null || event.isPast()) return;
+    if (_isSubmitting || Validators.qty(_qty) != null || event.isPast()) {
+      return;
+    }
 
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
@@ -54,9 +94,19 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
     );
     if (confirmed != true || !mounted) return;
 
-    // The ticket itself is stored from the next stage on; here the scenario
-    // only moves on to the tickets section and reports the result.
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(ticketsControllerProvider.notifier).purchase(event, _qty);
+    } on TicketException catch (error) {
+      if (mounted) setState(() => _isSubmitting = false);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
+    if (!mounted) return;
+
     context.go(AppRoutes.myTickets);
     messenger
       ..hideCurrentSnackBar()
@@ -115,7 +165,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
         ),
         child: PrimaryButton(
           label: AppTexts.purchaseAction(isFree: event.isFree, qty: _qty),
-          onPressed: _submit,
+          onPressed: _isSubmitting ? null : _submit,
         ),
       ),
     );

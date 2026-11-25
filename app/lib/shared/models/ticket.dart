@@ -25,4 +25,17 @@ class Ticket {
   final double totalPrice;
 
   final TicketStatus status;
+
+  bool get isActive => status == TicketStatus.active;
+
+  /// A ticket never changes anything but its status: the order itself is fixed
+  /// at the moment of purchase.
+  Ticket copyWith({TicketStatus? status}) => Ticket(
+        id: id,
+        eventId: eventId,
+        userId: userId,
+        qty: qty,
+        totalPrice: totalPrice,
+        status: status ?? this.status,
+      );
 }
