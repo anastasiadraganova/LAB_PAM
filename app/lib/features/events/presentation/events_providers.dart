@@ -61,6 +61,7 @@ class EventsListState {
     required this.total,
     this.isLoadingMore = false,
     this.loadMoreFailed = false,
+    this.isOffline = false,
   });
 
   final List<Event> items;
@@ -74,6 +75,9 @@ class EventsListState {
   final bool isLoadingMore;
   final bool loadMoreFailed;
 
+  /// The backend could not be reached: this is the copy saved on the device.
+  final bool isOffline;
+
   bool get hasMore => items.length < total;
 
   EventsListState copyWith({bool? isLoadingMore, bool? loadMoreFailed}) =>
@@ -83,6 +87,7 @@ class EventsListState {
         total: total,
         isLoadingMore: isLoadingMore ?? this.isLoadingMore,
         loadMoreFailed: loadMoreFailed ?? this.loadMoreFailed,
+        isOffline: isOffline,
       );
 }
 
@@ -117,6 +122,7 @@ class EventsListController extends AsyncNotifier<EventsListState> {
       items: first.items,
       page: first.page,
       total: first.total,
+      isOffline: first.fromCache,
     );
   }
 
@@ -143,6 +149,7 @@ class EventsListController extends AsyncNotifier<EventsListState> {
           items: [...current.items, ...next.items],
           page: next.page,
           total: next.total,
+          isOffline: current.isOffline || next.fromCache,
         ),
       );
     } catch (_) {
